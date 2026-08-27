@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+*.tmp
+# Keep source business exports outside this repository entirely.
+private/

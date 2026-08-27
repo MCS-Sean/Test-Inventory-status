@@ -1,0 +1,27 @@
+{
+  "seed": 173,
+  "item_count": 160,
+  "a_count": 25,
+  "b_count": 75,
+  "forecast_days": 90,
+  "review_days": 1,
+  "excess_target_multiple": 1.5,
+  "policies": {
+    "A - Top Movers": {
+      "z": 2.05,
+      "cycle_days": 14
+    },
+    "B - Core Products": {
+      "z": 1.65,
+      "cycle_days": 21
+    },
+    "C - Slow Moving": {
+      "z": 1.28,
+      "cycle_days": 30
+    },
+    "Dead Inv": {
+      "z": 0,
+      "cycle_days": 0
+    }
+  }
+}
