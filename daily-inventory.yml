@@ -1,0 +1,50 @@
+name: Daily synthetic inventory
+on:
+  schedule:
+    - cron: '23 14 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: synthetic-inventory-default-branch
+  cancel-in-progress: false
+jobs:
+  inventory:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test the checker
+        run: python -m unittest -v
+      - name: Advance simulation to today (UTC)
+        run: python inventory_checker.py
+      - name: Save changed synthetic results
+        env:
+          INVENTORY_AUTHOR_NAME: ${{ vars.INVENTORY_AUTHOR_NAME }}
+          INVENTORY_AUTHOR_EMAIL: ${{ vars.INVENTORY_AUTHOR_EMAIL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$INVENTORY_AUTHOR_NAME" && -n "$INVENTORY_AUTHOR_EMAIL" ]]; then
+            git config user.name "$INVENTORY_AUTHOR_NAME"
+            git config user.email "$INVENTORY_AUTHOR_EMAIL"
+          elif [[ -z "$INVENTORY_AUTHOR_NAME" && -z "$INVENTORY_AUTHOR_EMAIL" ]]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          else
+            echo 'Set both author variables or leave both unset.'
+            exit 1
+          fi
+          git add -- data/state.json reports/latest.json reports/latest.md
+          if git diff --cached --quiet; then
+            echo 'No changed simulation output to commit.'
+          else
+            git commit -m 'chore: automated synthetic inventory simulation update'
+            git push
+          fi
